@@ -1,21 +1,24 @@
 from BeautifulSoup import BeautifulSoup
 from appscript import *
-import urllib2, urllib, sys, re, urlparse, os
+import urllib2, urllib, sys, re, urlparse, os, datetime
 
 # get image
-def grabimg(url, imgpath):
+def parsetags(url, path):
     u = urllib2.urlopen(url)
     soup = BeautifulSoup(u)
     for i in soup.findAll('a', attrs={'href': re.compile('(?i)(jpg|png)$')}):
         imgurl = urlparse.urljoin(url, i['href'])
         filename = i['href'].split("/")[-1]
-        if not os.path.isfile(imgpath + filename):
-            print "Downloading: ", imgurl
-            urllib.urlretrieve(imgurl, imgpath + filename)
-            print "Done!"
-            bgchg(imgpath + filename)
-        else:
-            print "Image", filename, " already exists"
+        grabimg(imgurl, path, filename)
+
+def grabimg(imgurl, path, filename):
+    if not os.path.isfile(path + filename):
+        print "Downloading: ", imgurl
+        urllib.urlretrieve(imgurl, path + filename)
+        print "Done!"
+        bgchg(path + filename)
+    else:
+        print "Image", filename, " already exists"
 
 # change background to new image (doesn't work very well)
 def bgchg(p):
@@ -26,9 +29,14 @@ def bgchg(p):
         desk.picture.set(mactypes.File(p))
 
 def main():
-    url = "http://apod.nasa.gov/apod/"
+    now = datetime.datetime.now()
+    apod = "http://apod.nasa.gov/apod/"
+    modis = "http://modis.gsfc.nasa.gov/gallery/images/image{0}{1}{2}_500m.jpg".format(now.month,
+                                                                                       now.day,
+                                                                                       now.year)
     imgpath = "/Nasa/"
-    grabimg(url,imgpath)    
+    grabimg(modis, imgpath, modis.split("/")[-1])
+    parsetags(apod,imgpath)
     return 0
 
 if __name__ == "__main__":
